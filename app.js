@@ -37,24 +37,82 @@ let globalPlayers = [];
 
 if (isConfigured) {
   onValue(ref(db, 'teams'), (snapshot) => {
-    globalTeams = Object.values(snapshot.val() || {});
-    if (globalTeams.length === 0) {
+    if (snapshot.exists()) {
+      const val = snapshot.val();
+      globalTeams = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+    } else {
+      // First run: DB has no teams yet — seed with defaults
       globalTeams = [
         { id: 1, name: 'Team 1' }, { id: 2, name: 'Team 2' }, { id: 3, name: 'Team 3' },
         { id: 4, name: 'Team 4' }, { id: 5, name: 'Team 5' }, { id: 6, name: 'Team 6' }
       ];
-      set(ref(db, 'teams'), globalTeams); // Initialize DB with defaults
+      set(ref(db, 'teams'), globalTeams);
     }
     refreshAll();
   });
 
   onValue(ref(db, 'matches'), (snapshot) => {
-    globalMatches = Object.values(snapshot.val() || {});
+    if (snapshot.exists()) {
+      const val = snapshot.val();
+      globalMatches = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+    } else {
+      globalMatches = [];
+    }
     refreshAll();
   });
 
   onValue(ref(db, 'players'), (snapshot) => {
-    globalPlayers = Object.values(snapshot.val() || {});
+    if (snapshot.exists()) {
+      const val = snapshot.val();
+      globalPlayers = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+    } else {
+      // First run: seed players from roster
+      globalPlayers = [
+        { id: 1, teamId: 1, name: 'Kyrillos George', number: '1' },
+        { id: 2, teamId: 1, name: 'George Michael', number: '2' },
+        { id: 3, teamId: 1, name: 'Ghaly Karam', number: '3' },
+        { id: 4, teamId: 1, name: 'Nagy Nabil', number: '4' },
+        { id: 5, teamId: 1, name: 'Peter Azmy', number: '5' },
+        { id: 6, teamId: 1, name: 'Mark Ayman', number: '6' },
+
+        { id: 7, teamId: 2, name: 'Fady Hany', number: '1' },
+        { id: 8, teamId: 2, name: 'Henery', number: '2' },
+        { id: 9, teamId: 2, name: 'Bassem Saeed', number: '3' },
+        { id: 10, teamId: 2, name: 'Morcos Osama', number: '4' },
+        { id: 11, teamId: 2, name: 'Abanob Telmiz', number: '5' },
+        { id: 12, teamId: 2, name: 'Kevin', number: '6' },
+
+        { id: 13, teamId: 3, name: 'Bishoy Ramez', number: '1' },
+        { id: 14, teamId: 3, name: 'Emad Mahrous', number: '2' },
+        { id: 15, teamId: 3, name: 'Jan Nabil', number: '3' },
+        { id: 16, teamId: 3, name: 'Amir Antonios', number: '4' },
+        { id: 17, teamId: 3, name: 'Mark Mekhael', number: '5' },
+        { id: 18, teamId: 3, name: 'Pehlo Essam', number: '6' },
+
+        { id: 19, teamId: 4, name: 'Romany Sobhy', number: '1' },
+        { id: 20, teamId: 4, name: 'Michael Mourad', number: '2' },
+        { id: 21, teamId: 4, name: 'Thomas Mahrous', number: '3' },
+        { id: 22, teamId: 4, name: 'Peter Hany', number: '4' },
+        { id: 23, teamId: 4, name: 'Fady Mekha', number: '5' },
+        { id: 24, teamId: 4, name: 'Philo Emad', number: '6' },
+
+        { id: 25, teamId: 5, name: 'Bola Hany', number: '1' },
+        { id: 26, teamId: 5, name: 'Micheal Osama', number: '2' },
+        { id: 27, teamId: 5, name: 'Mounir Moheb', number: '3' },
+        { id: 28, teamId: 5, name: 'Ramy Adel', number: '4' },
+        { id: 29, teamId: 5, name: 'Marvin Wahed', number: '5' },
+        { id: 30, teamId: 5, name: 'Antione Adel', number: '6' },
+
+        { id: 31, teamId: 6, name: 'Andrew Ramez', number: '1' },
+        { id: 32, teamId: 6, name: 'Giovanni Kamel', number: '2' },
+        { id: 33, teamId: 6, name: 'Bishoy Atef', number: '3' },
+        { id: 34, teamId: 6, name: 'Mina Raafat', number: '4' },
+        { id: 35, teamId: 6, name: 'Fady Wagdy', number: '5' },
+        { id: 36, teamId: 6, name: 'Samer Waleed', number: '6' },
+        { id: 37, teamId: 6, name: 'Patrick Atef', number: '7' },
+      ];
+      set(ref(db, 'players'), globalPlayers);
+    }
     refreshAll();
   });
 } else {
