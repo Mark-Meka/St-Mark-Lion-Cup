@@ -1,20 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="St Mark Lions Cup — Soccer League Standings, Match Results & Management" />
   <title>St Mark Lions Cup</title>
-  <link rel="icon" href="/logo.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="logo.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+  <!-- ── Login Modal ─────────────────────────────────────── -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 class="modal-title">🔒 Admin Login</h2>
+      <form id="login-form" autocomplete="off">
+        <div class="modal-field">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" placeholder="Enter username" required />
+        </div>
+        <div class="modal-field">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Enter password" required />
+        </div>
+        <p id="login-error" class="login-error hidden">Invalid username or password.</p>
+        <button type="submit" class="btn-primary modal-btn">Sign In</button>
+      </form>
+      <button id="login-cancel" class="modal-close" title="Cancel">✕</button>
+    </div>
+  </div>
+
   <!-- ── Header ──────────────────────────────────────────── -->
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">
-        <img src="/logo.png" alt="Lions Cup Logo" class="brand-logo" />
+        <img src="logo.png" alt="Lions Cup Logo" class="brand-logo" />
         <div>
           <h1 class="brand-title">St Mark Lions Cup</h1>
           <p class="brand-subtitle">Church Soccer League</p>
@@ -23,7 +46,10 @@
       <nav class="header-nav">
         <a href="#standings" class="nav-link active" data-section="standings">Standings</a>
         <a href="#matches" class="nav-link" data-section="matches">Matches</a>
-        <a href="#add-match" class="nav-link" data-section="add-match">+ Add Result</a>
+        <a href="#add-match" class="nav-link admin-only hidden" data-section="add-match">+ Add Result</a>
+        <a href="#teams" class="nav-link admin-only hidden" data-section="teams">Teams</a>
+        <button id="admin-login-btn" class="nav-btn">🔑 Admin</button>
+        <button id="admin-logout-btn" class="nav-btn admin-only hidden">🚪 Logout</button>
       </nav>
     </div>
   </header>
@@ -61,8 +87,8 @@
       </div>
     </section>
 
-    <!-- ── Add Match ─────────────────────────────────────── -->
-    <section id="add-match" class="section">
+    <!-- ── Add Match (admin only) ────────────────────────── -->
+    <section id="add-match" class="section admin-only hidden">
       <div class="section-header">
         <h2 class="section-title">
           <span class="icon">⚽</span> Add Match Result
@@ -114,6 +140,20 @@
       </div>
       <p id="no-matches" class="empty-state hidden">No matches have been played yet.</p>
     </section>
+
+    <!-- ── Teams Management (admin only) ─────────────────── -->
+    <section id="teams" class="section admin-only hidden">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="icon">✏️</span> Manage Teams
+        </h2>
+      </div>
+      <div class="card teams-card">
+        <div id="teams-list" class="teams-list">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Toast container -->
@@ -123,6 +163,7 @@
     <p>St Mark Lions Cup &copy; 2026 — All glory to God</p>
   </footer>
 
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
 </body>
+
 </html>
