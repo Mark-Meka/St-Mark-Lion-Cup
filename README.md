@@ -1,4 +1,4 @@
-# St Mark Lions Cup ⚽🦁
+# St Mark Lions Cup 🦁
 
 A Church Soccer League management app — track standings, record match results, and manage teams.
 
