@@ -46,8 +46,9 @@
       <nav class="header-nav">
         <a href="#standings" class="nav-link active" data-section="standings">Standings</a>
         <a href="#matches" class="nav-link" data-section="matches">Matches</a>
+        <a href="#rosters" class="nav-link" data-section="rosters">Rosters</a>
         <a href="#add-match" class="nav-link admin-only hidden" data-section="add-match">+ Add Result</a>
-        <a href="#teams" class="nav-link admin-only hidden" data-section="teams">Teams</a>
+        <a href="#teams" class="nav-link admin-only hidden" data-section="teams">Settings</a>
         <button id="admin-login-btn" class="nav-btn">🔑 Admin</button>
         <button id="admin-logout-btn" class="nav-btn admin-only hidden">🚪 Logout</button>
       </nav>
@@ -58,9 +59,7 @@
     <!-- ── Standings ──────────────────────────────────────── -->
     <section id="standings" class="section">
       <div class="section-header">
-        <h2 class="section-title">
-          <span class="icon">🏆</span> League Standings
-        </h2>
+        <h2 class="section-title"><span class="icon">🏆</span> League Standings</h2>
       </div>
       <div class="card table-card">
         <div class="table-wrap">
@@ -79,9 +78,7 @@
                 <th class="col-pts">Pts</th>
               </tr>
             </thead>
-            <tbody id="standings-body">
-              <!-- Rendered by JS -->
-            </tbody>
+            <tbody id="standings-body"></tbody>
           </table>
         </div>
       </div>
@@ -90,14 +87,11 @@
     <!-- ── Add Match (admin only) ────────────────────────── -->
     <section id="add-match" class="section admin-only hidden">
       <div class="section-header">
-        <h2 class="section-title">
-          <span class="icon">⚽</span> Add Match Result
-        </h2>
+        <h2 class="section-title"><span class="icon">⚽</span> Add Match Result</h2>
       </div>
       <div class="card form-card">
         <form id="match-form" autocomplete="off">
           <div class="form-matchup">
-            <!-- Home -->
             <div class="form-team-col">
               <label for="home-team">Home Team</label>
               <select id="home-team" required>
@@ -106,10 +100,7 @@
               <label for="home-goals" class="sr-only">Home Goals</label>
               <input id="home-goals" type="number" min="0" max="99" placeholder="0" required />
             </div>
-
             <div class="form-vs">VS</div>
-
-            <!-- Away -->
             <div class="form-team-col">
               <label for="away-team">Away Team</label>
               <select id="away-team" required>
@@ -117,6 +108,25 @@
               </select>
               <label for="away-goals" class="sr-only">Away Goals</label>
               <input id="away-goals" type="number" min="0" max="99" placeholder="0" required />
+            </div>
+          </div>
+
+          <!-- Match Events -->
+          <div class="events-section">
+            <h3 class="events-title">Match Events (optional)</h3>
+            <div id="events-list" class="events-list"></div>
+            <div class="events-add-row">
+              <select id="event-type" class="event-select">
+                <option value="goal">⚽ Goal</option>
+                <option value="yellow">🟨 Yellow Card</option>
+                <option value="red">🟥 Red Card</option>
+              </select>
+              <select id="event-team" class="event-select">
+                <option value="">Team…</option>
+              </select>
+              <input type="text" id="event-player" class="event-input" placeholder="Player name" maxlength="40" />
+              <input type="number" id="event-minute" class="event-minute" placeholder="Min" min="1" max="120" />
+              <button type="button" id="add-event-btn" class="btn-small">+ Add</button>
             </div>
           </div>
 
@@ -131,32 +141,49 @@
     <!-- ── Recent Matches ────────────────────────────────── -->
     <section id="matches" class="section">
       <div class="section-header">
-        <h2 class="section-title">
-          <span class="icon">📋</span> Recent Matches
-        </h2>
+        <h2 class="section-title"><span class="icon">📋</span> Recent Matches</h2>
       </div>
-      <div id="matches-list" class="matches-list">
-        <!-- Rendered by JS -->
-      </div>
+      <div id="matches-list" class="matches-list"></div>
       <p id="no-matches" class="empty-state hidden">No matches have been played yet.</p>
     </section>
 
-    <!-- ── Teams Management (admin only) ─────────────────── -->
+    <!-- ── Team Rosters (public) ─────────────────────────── -->
+    <section id="rosters" class="section">
+      <div class="section-header">
+        <h2 class="section-title"><span class="icon">👥</span> Team Rosters</h2>
+      </div>
+      <div id="rosters-container" class="rosters-container"></div>
+    </section>
+
+    <!-- ── Teams/Settings (admin only) ───────────────────── -->
     <section id="teams" class="section admin-only hidden">
       <div class="section-header">
-        <h2 class="section-title">
-          <span class="icon">✏️</span> Manage Teams
-        </h2>
+        <h2 class="section-title"><span class="icon">✏️</span> Manage Teams</h2>
       </div>
       <div class="card teams-card">
-        <div id="teams-list" class="teams-list">
-          <!-- Rendered by JS -->
+        <div id="teams-list" class="teams-list"></div>
+      </div>
+
+      <!-- Player Management -->
+      <div class="section-header" style="margin-top:2rem;">
+        <h2 class="section-title"><span class="icon">👤</span> Manage Players</h2>
+      </div>
+      <div class="card teams-card">
+        <div class="player-mgmt-header">
+          <select id="player-team-select" class="player-team-select">
+            <option value="">Select a team…</option>
+          </select>
+        </div>
+        <div id="players-list" class="players-list"></div>
+        <div id="add-player-row" class="add-player-row hidden">
+          <input type="text" id="new-player-name" placeholder="Player name" maxlength="40" class="player-input" />
+          <input type="text" id="new-player-number" placeholder="#" maxlength="3" class="player-number-input" />
+          <button type="button" id="add-player-btn" class="btn-small">+ Add Player</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Toast container -->
   <div id="toast-container"></div>
 
   <footer class="site-footer">

@@ -602,6 +602,53 @@ input[type="number"]::-webkit-outer-spin-button {
   min-width: 0;
 }
 
+/* ── Match Events ───────────────────────────────────────── */
+.match-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.match-events {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.event-item {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-icon {
+  font-size: 1rem;
+}
+
+.event-team-tag {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--text);
+  margin-left: auto;
+}
+
+.event-min {
+  color: var(--gold);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  width: 28px;
+  text-align: right;
+}
+
 .match-team-name.home {
   text-align: right;
 }
@@ -810,6 +857,153 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
+/* ── Player Management ──────────────────────────────────── */
+.player-mgmt-header {
+  margin-bottom: 1.5rem;
+}
+
+.player-team-select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  font-family: var(--font);
+  font-size: 1rem;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.player-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border);
+}
+
+.player-num {
+  font-weight: 600;
+  color: var(--gold);
+  width: 24px;
+  text-align: center;
+}
+
+.player-name-text {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.player-delete {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+}
+
+.player-delete:hover {
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.add-player-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.player-input,
+.player-number-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  padding: 0.6rem 0.85rem;
+}
+
+/* ── Rosters Grid (Public) ──────────────────────────────── */
+.rosters-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.roster-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.roster-header {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.roster-team-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+.roster-count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.roster-table th {
+  text-align: left;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.roster-table td {
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.roster-name {
+  font-weight: 500;
+}
+
+.roster-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  width: 40px;
+}
+
 /* ── Footer ──────────────────────────────────────────────── */
 .site-footer {
   position: relative;
@@ -867,6 +1061,41 @@ input[type="number"]::-webkit-outer-spin-button {
   /* Always show delete button on mobile / touch */
   .match-delete {
     opacity: 1;
+    margin-top: 0.5rem;
+    align-self: flex-end;
+  }
+
+  .events-add-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "type team" "player min" "btn btn";
+  }
+
+  #event-type {
+    grid-area: type;
+  }
+
+  #event-team {
+    grid-area: team;
+  }
+
+  #event-player {
+    grid-area: player;
+  }
+
+  #event-minute {
+    grid-area: min;
+  }
+
+  #add-event-btn {
+    grid-area: btn;
+  }
+
+  .add-player-row {
+    grid-template-columns: 1fr 100px;
+  }
+
+  #new-player-name {
+    grid-column: 1 / -1;
   }
 
   .team-row {
