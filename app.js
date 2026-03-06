@@ -8,7 +8,7 @@ import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDNo18IIcMO1a0RC0rxNw3kR9m9PSBGpYQ",
   authDomain: "st-mark-lion-cup.firebaseapp.com",
-  databaseURL: "https://st-mark-lion-cup-default-rtdb.firebaseio.com",
+  databaseURL: "https://st-mark-lion-cup-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "st-mark-lion-cup",
   storageBucket: "st-mark-lion-cup.firebasestorage.app",
   messagingSenderId: "611606030868",
