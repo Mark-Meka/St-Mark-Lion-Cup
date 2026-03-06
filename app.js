@@ -1,9 +1,70 @@
 /* ============================================================
-   St Mark Lions Cup — Client Application (Static / localStorage)
+   St Mark Lions Cup — Client Application (Firebase Backend)
    ============================================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-// ── Admin Credential Hash (SHA-256 of "username:password") ──
-// The actual username and password are NOT stored here.
+// ── Firebase Configuration ────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDNo18IIcMO1a0RC0rxNw3kR9m9PSBGpYQ",
+  authDomain: "st-mark-lion-cup.firebaseapp.com",
+  databaseURL: "https://st-mark-lion-cup-default-rtdb.firebaseio.com",
+  projectId: "st-mark-lion-cup",
+  storageBucket: "st-mark-lion-cup.firebasestorage.app",
+  messagingSenderId: "611606030868",
+  appId: "1:611606030868:web:52eb110a4c5aa1b0a69501",
+  measurementId: "G-W5D2PLXMV7"
+};
+
+const isConfigured = firebaseConfig.apiKey !== "PASTE_YOUR_API_KEY_HERE";
+let db;
+try {
+  if (isConfigured) {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+  }
+} catch (err) {
+  console.error("Firebase init failed:", err);
+}
+
+// ── In-Memory State Syncing ───────────────────────────────
+let globalTeams = [
+  { id: 1, name: 'Team 1' }, { id: 2, name: 'Team 2' }, { id: 3, name: 'Team 3' },
+  { id: 4, name: 'Team 4' }, { id: 5, name: 'Team 5' }, { id: 6, name: 'Team 6' }
+];
+let globalMatches = [];
+let globalPlayers = [];
+
+if (isConfigured) {
+  onValue(ref(db, 'teams'), (snapshot) => {
+    globalTeams = Object.values(snapshot.val() || {});
+    if (globalTeams.length === 0) {
+      globalTeams = [
+        { id: 1, name: 'Team 1' }, { id: 2, name: 'Team 2' }, { id: 3, name: 'Team 3' },
+        { id: 4, name: 'Team 4' }, { id: 5, name: 'Team 5' }, { id: 6, name: 'Team 6' }
+      ];
+      set(ref(db, 'teams'), globalTeams); // Initialize DB with defaults
+    }
+    refreshAll();
+  });
+
+  onValue(ref(db, 'matches'), (snapshot) => {
+    globalMatches = Object.values(snapshot.val() || {});
+    refreshAll();
+  });
+
+  onValue(ref(db, 'players'), (snapshot) => {
+    globalPlayers = Object.values(snapshot.val() || {});
+    refreshAll();
+  });
+} else {
+  // If not configured, show error toast after a tiny delay
+  setTimeout(() => {
+    showToast("Database not configured! Admin must add Firebase keys.", "error");
+  }, 1000);
+}
+
+// ── Admin Credential Hash (SHA-256) ───────────────────────
 const ADMIN_HASH = 'ed5c91a4ca10841816d7732e80661d226034cc02def58cb70cbf9dc3ae3d041d';
 
 async function hashCredentials(username, password) {
@@ -13,25 +74,6 @@ async function hashCredentials(username, password) {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
-// ── Storage Keys ──────────────────────────────────────────
-const STORAGE_KEYS = {
-  teams: 'stmark_teams',
-  matches: 'stmark_matches',
-  players: 'stmark_players',
-  nextMatchId: 'stmark_nextMatchId',
-  nextPlayerId: 'stmark_nextPlayerId'
-};
-
-// ── Default Data ──────────────────────────────────────────
-const DEFAULT_TEAMS = [
-  { id: 1, name: 'Team 1' },
-  { id: 2, name: 'Team 2' },
-  { id: 3, name: 'Team 3' },
-  { id: 4, name: 'Team 4' },
-  { id: 5, name: 'Team 5' },
-  { id: 6, name: 'Team 6' }
-];
 
 // ── Auth State ────────────────────────────────────────────
 let isAdmin = false;
@@ -59,52 +101,38 @@ function logoutAdmin() {
 }
 
 function updateAdminUI() {
-  document.querySelectorAll('.admin-only').forEach(el => {
-    el.classList.toggle('hidden', !isAdmin);
-  });
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
   const loginBtn = document.getElementById('admin-login-btn');
   if (loginBtn) loginBtn.classList.toggle('hidden', isAdmin);
   renderMatches();
 }
 
-// ── Data Access ───────────────────────────────────────────
-function getTeams() {
-  const raw = localStorage.getItem(STORAGE_KEYS.teams);
-  if (!raw) {
-    localStorage.setItem(STORAGE_KEYS.teams, JSON.stringify(DEFAULT_TEAMS));
-    return [...DEFAULT_TEAMS];
-  }
-  return JSON.parse(raw);
+// ── Data Savers (pushes to Firebase) ──────────────────────
+function saveTeams() {
+  if (isConfigured) set(ref(db, 'teams'), globalTeams);
 }
-function saveTeams(teams) { localStorage.setItem(STORAGE_KEYS.teams, JSON.stringify(teams)); }
+function saveMatches() {
+  if (isConfigured) set(ref(db, 'matches'), globalMatches);
+}
+function savePlayers() {
+  if (isConfigured) set(ref(db, 'players'), globalPlayers);
+}
 
-function getMatches() {
-  const raw = localStorage.getItem(STORAGE_KEYS.matches);
-  return raw ? JSON.parse(raw) : [];
+// ── Helpers for auto-incrementing IDs ─────────────────────
+function getNextMatchId() {
+  return globalMatches.reduce((max, m) => Math.max(max, m.id), 0) + 1;
 }
-function saveMatches(matches) { localStorage.setItem(STORAGE_KEYS.matches, JSON.stringify(matches)); }
-
-function getPlayers() {
-  const raw = localStorage.getItem(STORAGE_KEYS.players);
-  return raw ? JSON.parse(raw) : [];
+function getNextPlayerId() {
+  return globalPlayers.reduce((max, p) => Math.max(max, p.id), 0) + 1;
 }
-function savePlayers(players) { localStorage.setItem(STORAGE_KEYS.players, JSON.stringify(players)); }
-
-function getNextId(key) {
-  const raw = localStorage.getItem(key);
-  return raw ? parseInt(raw, 10) : 1;
-}
-function setNextId(key, id) { localStorage.setItem(key, id.toString()); }
 
 // ── Compute Standings ─────────────────────────────────────
 function computeStandings() {
-  const teams = getTeams();
-  const matches = getMatches();
   const stats = {};
-  teams.forEach(t => {
+  globalTeams.forEach(t => {
     stats[t.id] = { id: t.id, name: t.name, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
   });
-  matches.forEach(m => {
+  globalMatches.forEach(m => {
     const home = stats[m.homeTeamId];
     const away = stats[m.awayTeamId];
     if (!home || !away) return;
@@ -117,7 +145,7 @@ function computeStandings() {
   });
   Object.values(stats).forEach(s => { s.gd = s.gf - s.ga; s.pts = s.w * 3 + s.d; });
   return Object.values(stats).sort((a, b) =>
-    b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name)
+    b.pts - a.pts || b.gf - a.gf || Object.values(stats).indexOf(a) - Object.values(stats).indexOf(b)
   );
 }
 
@@ -127,6 +155,7 @@ let pendingEvents = [];
 // ── DOM Refs ──────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const standingsBody = $('standings-body');
+const statsBody = $('stats-body');
 const matchesList = $('matches-list');
 const noMatches = $('no-matches');
 const matchForm = $('match-form');
@@ -192,25 +221,16 @@ logoutBtn.addEventListener('click', () => { logoutAdmin(); showToast('Logged out
 
 // ── Render Team Dropdowns ─────────────────────────────────
 function renderTeamDropdowns() {
-  const teams = getTeams();
   [homeTeamSel, awayTeamSel].forEach(sel => {
     sel.innerHTML = '<option value="">Select team…</option>';
-    teams.forEach(t => {
+    globalTeams.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id; opt.textContent = t.name;
       sel.appendChild(opt);
     });
   });
-  // Event team dropdown
-  eventTeam.innerHTML = '<option value="">Team…</option>';
-  teams.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.id; opt.textContent = t.name;
-    eventTeam.appendChild(opt);
-  });
-  // Player mgmt dropdown
   playerTeamSelect.innerHTML = '<option value="">Select a team…</option>';
-  teams.forEach(t => {
+  globalTeams.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t.id; opt.textContent = t.name;
     playerTeamSelect.appendChild(opt);
@@ -233,22 +253,71 @@ function renderStandings() {
       <td class="team-name">${escHtml(r.name)}</td>
       <td class="col-num">${r.mp}</td><td class="col-num">${r.w}</td>
       <td class="col-num">${r.d}</td><td class="col-num">${r.l}</td>
-      <td class="col-num">${r.gf}</td><td class="col-num">${r.ga}</td>
-      <td class="col-num ${gdClass}">${gdStr}</td><td class="col-pts">${r.pts}</td>`;
+      <td class="col-num" style="font-weight:600;">${r.gf}</td>
+      <td class="col-pts">${r.pts}</td>`;
     tr.style.animation = `fadeUp .35s ease ${i * 0.04}s both`;
     frag.appendChild(tr);
   });
   standingsBody.appendChild(frag);
 }
 
+// ── Render Player Stats ───────────────────────────────────
+function renderPlayerStats() {
+  if (!statsBody) return;
+  const playerStatsMap = {};
+
+  // Initialize stats for every registered player
+  globalPlayers.forEach(p => {
+    playerStatsMap[p.id] = { id: p.id, name: p.name, teamId: p.teamId, goals: 0, yellow: 0, red: 0 };
+  });
+
+  // Tally events
+  globalMatches.forEach(m => {
+    if (!m.events) return;
+    m.events.forEach(ev => {
+      // Find player by name/teamId since pendingEvents historically saved strings, not IDs
+      let targetPlayer = globalPlayers.find(p => p.name === ev.player && p.teamId === ev.teamId);
+      if (targetPlayer) {
+        if (ev.type === 'goal') playerStatsMap[targetPlayer.id].goals++;
+        if (ev.type === 'yellow') playerStatsMap[targetPlayer.id].yellow++;
+        if (ev.type === 'red') playerStatsMap[targetPlayer.id].red++;
+      }
+    });
+  });
+
+  // Convert to array and sort: Highest Goals first, then Name
+  const statsArray = Object.values(playerStatsMap).filter(p => p.goals > 0 || p.yellow > 0 || p.red > 0);
+  statsArray.sort((a, b) => {
+    if (b.goals !== a.goals) return b.goals - a.goals;
+    return a.name.localeCompare(b.name);
+  });
+
+  statsBody.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  statsArray.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    const pos = i + 1;
+    let posClass = pos === 1 ? 'pos-1' : pos === 2 ? 'pos-2' : pos === 3 ? 'pos-3' : '';
+    const teamName = globalTeams.find(t => t.id === p.teamId)?.name || '';
+
+    tr.innerHTML = `
+      <td class="col-pos"><span class="pos-badge ${posClass}">${pos}</span></td>
+      <td class="team-name">${escHtml(p.name)}</td>
+      <td class="team-name" style="font-size: 0.85rem; color: var(--text-dim);">${escHtml(teamName)}</td>
+      <td class="col-num" style="font-weight: 700;">${p.goals}</td>
+      <td class="col-num">${p.yellow}</td>
+      <td class="col-num">${p.red}</td>`;
+    tr.style.animation = `fadeUp .35s ease ${i * 0.04}s both`;
+    frag.appendChild(tr);
+  });
+  statsBody.appendChild(frag);
+}
+
 // ── Render Matches (with events) ──────────────────────────
 function renderMatches() {
-  const matches = getMatches();
-  const teams = getTeams();
   const teamMap = {};
-  teams.forEach(t => { teamMap[t.id] = t.name; });
-
-  const sorted = [...matches].sort((a, b) => new Date(b.playedAt) - new Date(a.playedAt) || b.id - a.id);
+  globalTeams.forEach(t => { teamMap[t.id] = t.name; });
+  const sorted = [...globalMatches].sort((a, b) => new Date(b.playedAt) - new Date(a.playedAt) || b.id - a.id);
 
   if (sorted.length === 0) {
     matchesList.innerHTML = '';
@@ -268,18 +337,24 @@ function renderMatches() {
     const dateStr = formatDate(m.playedAt);
     const deleteBtn = isAdmin ? `<button class="match-delete" data-id="${m.id}" title="Delete match">✕</button>` : '';
 
-    // Build events HTML
     let eventsHtml = '';
     if (m.events && m.events.length > 0) {
-      const eventItems = m.events
-        .sort((a, b) => (a.minute || 0) - (b.minute || 0))
-        .map(ev => {
-          const icon = ev.type === 'goal' ? '⚽' : ev.type === 'yellow' ? '🟨' : '🟥';
-          const tName = teamMap[ev.teamId] || '';
-          const minStr = ev.minute ? `${ev.minute}'` : '';
-          return `<span class="event-item"><span class="event-icon">${icon}</span> ${escHtml(ev.player)} <span class="event-team-tag">${escHtml(tName)}</span> <span class="event-min">${minStr}</span></span>`;
-        }).join('');
-      eventsHtml = `<div class="match-events">${eventItems}</div>`;
+      const homeEvents = m.events.filter(ev => ev.teamId === m.homeTeamId).sort((a, b) => (a.minute || 0) - (b.minute || 0));
+      const awayEvents = m.events.filter(ev => ev.teamId === m.awayTeamId).sort((a, b) => (a.minute || 0) - (b.minute || 0));
+
+      const renderEvts = (evts, isHome) => evts.map(ev => {
+        const icon = ev.type === 'goal' ? '⚽' : ev.type === 'yellow' ? '🟨' : '🟥';
+        const minStr = ev.minute ? `<span class="event-min">${ev.minute}'</span>` : '';
+        // If home team, put minute on the right. If away team, put minute on the left.
+        if (isHome) return `<span class="event-item">${escHtml(ev.player)} <span class="event-icon">${icon}</span> ${minStr}</span>`;
+        return `<span class="event-item">${minStr} <span class="event-icon">${icon}</span> ${escHtml(ev.player)}</span>`;
+      }).join('');
+
+      eventsHtml = `
+      <div class="match-events">
+        <div class="match-events-col home">${renderEvts(homeEvents, true)}</div>
+        <div class="match-events-col away">${renderEvts(awayEvents, false)}</div>
+      </div>`;
     }
 
     card.innerHTML = `
@@ -314,12 +389,11 @@ function renderPendingEvents() {
   if (pendingEvents.length === 0) return;
   pendingEvents.forEach((ev, i) => {
     const icon = ev.type === 'goal' ? '⚽' : ev.type === 'yellow' ? '🟨' : '🟥';
-    const teams = getTeams();
-    const tName = teams.find(t => t.id === ev.teamId)?.name || '';
+    const tName = globalTeams.find(t => t.id === ev.teamId)?.name || '';
     const minStr = ev.minute ? `${ev.minute}'` : '';
     const div = document.createElement('div');
     div.className = 'pending-event';
-    div.innerHTML = `<span>${icon} ${escHtml(ev.player)} (${escHtml(tName)}) ${minStr}</span>
+    div.innerHTML = `<span>${icon} ${escHtml(ev.player)} <span class="event-team-tag">${escHtml(tName)}</span> <span class="event-min">${minStr}</span></span>
       <button type="button" class="event-remove" data-idx="${i}" title="Remove">✕</button>`;
     eventsList.appendChild(div);
   });
@@ -331,12 +405,60 @@ function renderPendingEvents() {
   });
 }
 
+function updateEventTeamDropdown() {
+  eventTeam.innerHTML = '<option value="">Team…</option>';
+  const homeId = parseInt(homeTeamSel.value, 10);
+  const awayId = parseInt(awayTeamSel.value, 10);
+
+  [homeId, awayId].forEach(id => {
+    if (!id) return;
+    const team = globalTeams.find(t => t.id === id);
+    if (team) {
+      const opt = document.createElement('option');
+      opt.value = team.id; opt.textContent = team.name;
+      eventTeam.appendChild(opt);
+    }
+  });
+  updateEventPlayerDropdown();
+}
+
+function updateEventPlayerDropdown() {
+  const teamId = parseInt(eventTeam.value, 10);
+  eventPlayer.innerHTML = '<option value="">Player…</option>';
+
+  if (!teamId) {
+    eventPlayer.disabled = true;
+    return;
+  }
+
+  eventPlayer.disabled = false;
+  const teamPlayers = globalPlayers.filter(p => p.teamId === teamId);
+
+  if (teamPlayers.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = ""; opt.textContent = "(No players found)";
+    eventPlayer.appendChild(opt);
+    return;
+  }
+
+  teamPlayers.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name; opt.textContent = `${p.number ? p.number + ' - ' : ''}${p.name}`;
+    eventPlayer.appendChild(opt);
+  });
+}
+
+homeTeamSel.addEventListener('change', updateEventTeamDropdown);
+awayTeamSel.addEventListener('change', updateEventTeamDropdown);
+eventTeam.addEventListener('change', updateEventPlayerDropdown);
+
 addEventBtn.addEventListener('click', () => {
   const player = eventPlayer.value.trim();
   const teamId = parseInt(eventTeam.value, 10);
   const minute = eventMinute.value ? parseInt(eventMinute.value, 10) : null;
-  if (!player) return showToast('Enter a player name.', 'error');
   if (!teamId) return showToast('Select a team for the event.', 'error');
+  if (!player) return showToast('Select a player.', 'error');
+
   pendingEvents.push({ type: eventType.value, teamId, player, minute });
   eventPlayer.value = '';
   eventMinute.value = '';
@@ -347,6 +469,7 @@ addEventBtn.addEventListener('click', () => {
 matchForm.addEventListener('submit', e => {
   e.preventDefault();
   if (!isAdmin) return showToast('Admin login required.', 'error');
+  if (!isConfigured) return showToast('Error: Database not configured.', 'error');
 
   const homeTeamId = parseInt(homeTeamSel.value, 10);
   const awayTeamId = parseInt(awayTeamSel.value, 10);
@@ -357,15 +480,12 @@ matchForm.addEventListener('submit', e => {
   if (isNaN(hg) || isNaN(ag) || hg < 0 || ag < 0) return showToast('Goals must be non-negative numbers.', 'error');
 
   setLoading(true);
-  const matches = getMatches();
-  const newId = getNextId(STORAGE_KEYS.nextMatchId);
-  matches.push({
-    id: newId, homeTeamId, awayTeamId, homeGoals: hg, awayGoals: ag,
+  globalMatches.push({
+    id: getNextMatchId(), homeTeamId, awayTeamId, homeGoals: hg, awayGoals: ag,
     events: [...pendingEvents],
     playedAt: new Date().toISOString()
   });
-  saveMatches(matches);
-  setNextId(STORAGE_KEYS.nextMatchId, newId + 1);
+  saveMatches();
 
   const homeName = homeTeamSel.options[homeTeamSel.selectedIndex].text;
   const awayName = awayTeamSel.options[awayTeamSel.selectedIndex].text;
@@ -373,25 +493,26 @@ matchForm.addEventListener('submit', e => {
 
   pendingEvents = [];
   matchForm.reset();
+  updateEventTeamDropdown();
   renderPendingEvents();
-  refreshAll();
+  refreshAll(); // will be natively refreshed by onValue if online, but good fallback
   setLoading(false);
 });
 
 // ── Delete Match ──────────────────────────────────────────
 function deleteMatch(id) {
   if (!isAdmin) return;
+  if (!isConfigured) return;
   if (!confirm('Delete this match result? Standings will be recalculated.')) return;
-  saveMatches(getMatches().filter(m => m.id !== id));
+  globalMatches = globalMatches.filter(m => m.id !== id);
+  saveMatches();
   showToast('Match deleted.', 'success');
-  refreshAll();
 }
 
 // ── Teams Management ──────────────────────────────────────
 function renderTeamsManagement() {
-  const teams = getTeams();
   teamsList.innerHTML = '';
-  teams.forEach((t, i) => {
+  globalTeams.forEach((t, i) => {
     const row = document.createElement('div');
     row.className = 'team-row';
     row.style.animation = `fadeUp .35s ease ${i * 0.04}s both`;
@@ -417,15 +538,13 @@ function renderTeamsManagement() {
 
 function renameTeam(id, newName) {
   if (!isAdmin || !newName) return showToast('Team name cannot be empty.', 'error');
-  const teams = getTeams();
-  const team = teams.find(t => t.id === id);
+  const team = globalTeams.find(t => t.id === id);
   if (!team) return;
-  if (teams.find(t => t.id !== id && t.name.toLowerCase() === newName.toLowerCase()))
+  if (globalTeams.find(t => t.id !== id && t.name.toLowerCase() === newName.toLowerCase()))
     return showToast('Another team already has that name.', 'error');
   team.name = newName;
-  saveTeams(teams);
+  saveTeams();
   showToast(`Team renamed to "${newName}"`, 'success');
-  refreshAll();
 }
 
 // ── Player Management (admin) ─────────────────────────────
@@ -435,7 +554,7 @@ function renderPlayersList() {
   const teamId = parseInt(playerTeamSelect.value, 10);
   if (!teamId) { playersList.innerHTML = ''; addPlayerRow.classList.add('hidden'); return; }
   addPlayerRow.classList.remove('hidden');
-  const players = getPlayers().filter(p => p.teamId === teamId);
+  const players = globalPlayers.filter(p => p.teamId === teamId);
   playersList.innerHTML = '';
   if (players.length === 0) {
     playersList.innerHTML = '<p class="empty-state" style="padding:1rem;">No players added yet.</p>';
@@ -454,56 +573,42 @@ function renderPlayersList() {
   playersList.querySelectorAll('.player-delete').forEach(btn => {
     btn.addEventListener('click', () => {
       if (!confirm('Remove this player?')) return;
-      const id = parseInt(btn.dataset.id, 10);
-      savePlayers(getPlayers().filter(p => p.id !== id));
+      globalPlayers = globalPlayers.filter(p => p.id !== parseInt(btn.dataset.id, 10));
+      savePlayers();
       showToast('Player removed.', 'success');
-      renderPlayersList();
-      renderRosters();
     });
   });
 }
 
 addPlayerBtn.addEventListener('click', () => {
   if (!isAdmin) return;
+  if (!isConfigured) return showToast('Error: Database not configured.', 'error');
   const name = newPlayerName.value.trim();
   const number = newPlayerNumber.value.trim();
   const teamId = parseInt(playerTeamSelect.value, 10);
   if (!name) return showToast('Enter a player name.', 'error');
   if (!teamId) return showToast('Select a team first.', 'error');
 
-  const players = getPlayers();
-  const newId = getNextId(STORAGE_KEYS.nextPlayerId);
-  players.push({ id: newId, teamId, name, number });
-  savePlayers(players);
-  setNextId(STORAGE_KEYS.nextPlayerId, newId + 1);
+  globalPlayers.push({ id: getNextPlayerId(), teamId, name, number });
+  savePlayers();
   newPlayerName.value = '';
   newPlayerNumber.value = '';
   showToast(`${name} added!`, 'success');
-  renderPlayersList();
-  renderRosters();
 });
 
 // ── Rosters (public view) ─────────────────────────────────
 function renderRosters() {
-  const teams = getTeams();
-  const allPlayers = getPlayers();
   rostersContainer.innerHTML = '';
-
-  teams.forEach((t, ti) => {
-    const players = allPlayers.filter(p => p.teamId === t.id);
+  globalTeams.forEach((t, ti) => {
+    const players = globalPlayers.filter(p => p.teamId === t.id);
     const card = document.createElement('div');
     card.className = 'roster-card card';
     card.style.animation = `fadeUp .35s ease ${ti * 0.05}s both`;
+    let playersHtml = players.length === 0
+      ? '<p class="empty-state" style="padding:1rem;font-size:0.85rem;">No players registered yet.</p>'
+      : Object.values(players).map(p => `<tr><td class="roster-num">${escHtml(p.number || '-')}</td><td class="roster-name">${escHtml(p.name)}</td></tr>`).join('');
 
-    let playersHtml;
-    if (players.length === 0) {
-      playersHtml = '<p class="empty-state" style="padding:1rem;font-size:0.85rem;">No players registered yet.</p>';
-    } else {
-      const rows = players.map(p =>
-        `<tr><td class="roster-num">${escHtml(p.number || '-')}</td><td class="roster-name">${escHtml(p.name)}</td></tr>`
-      ).join('');
-      playersHtml = `<table class="roster-table"><thead><tr><th>#</th><th>Player</th></tr></thead><tbody>${rows}</tbody></table>`;
-    }
+    if (players.length > 0) playersHtml = `<table class="roster-table"><thead><tr><th>#</th><th>Player</th></tr></thead><tbody>${playersHtml}</tbody></table>`;
 
     card.innerHTML = `<div class="roster-header"><h3 class="roster-team-name">${escHtml(t.name)}</h3><span class="roster-count">${players.length} player${players.length !== 1 ? 's' : ''}</span></div>${playersHtml}`;
     rostersContainer.appendChild(card);
@@ -514,6 +619,7 @@ function renderRosters() {
 function refreshAll() {
   renderTeamDropdowns();
   renderStandings();
+  renderPlayerStats();
   renderMatches();
   renderTeamsManagement();
   renderRosters();
@@ -541,5 +647,5 @@ function formatDate(iso) {
 }
 
 // ── Init ──────────────────────────────────────────────────
-function init() { getTeams(); checkAdminSession(); refreshAll(); }
+function init() { checkAdminSession(); refreshAll(); }
 init();

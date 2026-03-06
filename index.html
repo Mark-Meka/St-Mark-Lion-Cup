@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="St Mark Lions Cup — Soccer League Standings, Match Results & Management" />
   <title>St Mark Lions Cup</title>
-  <link rel="icon" href="logo.png" type="image/png" />
+  <!-- <link rel="icon" href="logo.png" type="image/png" /> -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -37,7 +37,7 @@
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">
-        <img src="logo.png" alt="Lions Cup Logo" class="brand-logo" />
+        <!-- <img src="logo.png" alt="Lions Cup Logo" class="brand-logo" /> -->
         <div>
           <h1 class="brand-title">St Mark Lions Cup</h1>
           <p class="brand-subtitle">Church Soccer League</p>
@@ -72,13 +72,35 @@
                 <th class="col-num">W</th>
                 <th class="col-num">D</th>
                 <th class="col-num">L</th>
-                <th class="col-num">GF</th>
-                <th class="col-num">GA</th>
-                <th class="col-num">GD</th>
+                <th class="col-num" title="Goals Scored">Goals</th>
                 <th class="col-pts">Pts</th>
               </tr>
             </thead>
             <tbody id="standings-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Player Statistics ─────────────────────────────── -->
+    <section id="stats" class="section">
+      <div class="section-header">
+        <h2 class="section-title"><span class="icon">📈</span> Player Statistics</h2>
+      </div>
+      <div class="card table-card">
+        <div class="table-container">
+          <table class="data-table" id="stats-table">
+            <thead>
+              <tr>
+                <th class="col-pos">#</th>
+                <th class="col-team">Player</th>
+                <th class="col-team">Team</th>
+                <th class="col-num" title="Goals">⚽</th>
+                <th class="col-num" title="Yellow Cards">🟨</th>
+                <th class="col-num" title="Red Cards">🟥</th>
+              </tr>
+            </thead>
+            <tbody id="stats-body"></tbody>
           </table>
         </div>
       </div>
@@ -116,17 +138,19 @@
             <h3 class="events-title">Match Events (optional)</h3>
             <div id="events-list" class="events-list"></div>
             <div class="events-add-row">
-              <select id="event-type" class="event-select">
+              <select id="event-type" class="event-select" title="Event Type">
                 <option value="goal">⚽ Goal</option>
                 <option value="yellow">🟨 Yellow Card</option>
                 <option value="red">🟥 Red Card</option>
               </select>
-              <select id="event-team" class="event-select">
+              <select id="event-team" class="event-select" title="Select Event Team">
                 <option value="">Team…</option>
               </select>
-              <input type="text" id="event-player" class="event-input" placeholder="Player name" maxlength="40" />
+              <select id="event-player" class="event-input" title="Select Player" disabled>
+                <option value="">Player…</option>
+              </select>
               <input type="number" id="event-minute" class="event-minute" placeholder="Min" min="1" max="120" />
-              <button type="button" id="add-event-btn" class="btn-small">+ Add</button>
+              <button type="button" id="add-event-btn" class="btn-small btn-danger">+ Add</button>
             </div>
           </div>
 
@@ -165,12 +189,12 @@
       </div>
 
       <!-- Player Management -->
-      <div class="section-header" style="margin-top:2rem;">
+      <div class="section-header player-mgmt-section-header">
         <h2 class="section-title"><span class="icon">👤</span> Manage Players</h2>
       </div>
       <div class="card teams-card">
         <div class="player-mgmt-header">
-          <select id="player-team-select" class="player-team-select">
+          <select id="player-team-select" class="player-team-select" title="Select Team">
             <option value="">Select a team…</option>
           </select>
         </div>
@@ -190,7 +214,7 @@
     <p>St Mark Lions Cup &copy; 2026 — All glory to God</p>
   </footer>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 
 </html>
