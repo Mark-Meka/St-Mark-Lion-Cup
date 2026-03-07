@@ -1,5 +1,7 @@
 # St Mark Lions Cup 🦁
 
+🌐 **Live Website:** [mark-meka.github.io/St-Mark-Lion-Cup](https://mark-meka.github.io/St-Mark-Lion-Cup/)
+
 A Church Soccer League management app — track standings, record match results, and manage teams.
 
 ## 🚀 Deploy to GitHub Pages
@@ -8,7 +10,7 @@ A Church Soccer League management app — track standings, record match results,
 2. Go to **Settings → Pages**
 3. Under **Source**, select **Deploy from a branch**
 4. Choose `main` branch and `/ (root)` folder
-5. Click **Save** — your site will be live at `https://<your-username>.github.io/St-Mark-Lion-Cup/`
+5. Click **Save** — your site will be live at [mark-meka.github.io/St-Mark-Lion-Cup](https://mark-meka.github.io/St-Mark-Lion-Cup/)
 
 ## 💻 Run Locally
 

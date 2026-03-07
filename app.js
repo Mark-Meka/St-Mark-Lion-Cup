@@ -185,11 +185,19 @@ function getNextPlayerId() {
 }
 
 // ── Compute Standings ─────────────────────────────────────
+//
+// Ranking priority:
+//   1. Points (most points → higher rank)
+//   2. Head-to-head result (if tied on points, the team that beat
+//      the other in their direct match ranks higher)
+//   3. Goals scored / Goals For (most goals → higher rank)
+//
 function computeStandings() {
   const stats = {};
   globalTeams.forEach(t => {
     stats[t.id] = { id: t.id, name: t.name, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
   });
+
   globalMatches.forEach(m => {
     const home = stats[m.homeTeamId];
     const away = stats[m.awayTeamId];
@@ -201,10 +209,41 @@ function computeStandings() {
     else if (m.homeGoals < m.awayGoals) { away.w++; home.l++; }
     else { home.d++; away.d++; }
   });
+
   Object.values(stats).forEach(s => { s.gd = s.gf - s.ga; s.pts = s.w * 3 + s.d; });
-  return Object.values(stats).sort((a, b) =>
-    b.pts - a.pts || b.gf - a.gf || Object.values(stats).indexOf(a) - Object.values(stats).indexOf(b)
-  );
+
+  // ── Head-to-head helper ───────────────────────────────────
+  // Returns a positive number if teamA beat teamB, negative if teamB beat teamA,
+  // or 0 if they drew / never met.
+  function headToHead(teamAId, teamBId) {
+    const matches = globalMatches.filter(m =>
+      (m.homeTeamId === teamAId && m.awayTeamId === teamBId) ||
+      (m.homeTeamId === teamBId && m.awayTeamId === teamAId)
+    );
+    let aWins = 0, bWins = 0;
+    matches.forEach(m => {
+      if (m.homeTeamId === teamAId) {
+        if (m.homeGoals > m.awayGoals) aWins++;
+        else if (m.homeGoals < m.awayGoals) bWins++;
+      } else {
+        if (m.awayGoals > m.homeGoals) aWins++;
+        else if (m.awayGoals < m.homeGoals) bWins++;
+      }
+    });
+    return bWins - aWins; // negative = a ranks higher, positive = b ranks higher
+  }
+
+  return Object.values(stats).sort((a, b) => {
+    // 1. Points
+    if (b.pts !== a.pts) return b.pts - a.pts;
+
+    // 2. Head-to-head (only applies when points are equal)
+    const h2h = headToHead(a.id, b.id);
+    if (h2h !== 0) return h2h;
+
+    // 3. Goal difference (goals scored − goals conceded)
+    return b.gd - a.gd;
+  });
 }
 
 // ── Temp events for the match form ────────────────────────
